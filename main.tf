@@ -2,7 +2,9 @@ resource "tls_private_key" "ca" {
   algorithm = "RSA"
   rsa_bits  = 2048
 }
-
+locals {
+  associated_subnets_map = { for i, subnet_id in var.associated_subnets : "subnet${i + 1}" => subnet_id }
+}
 resource "tls_self_signed_cert" "ca" {
   private_key_pem = tls_private_key.ca.private_key_pem
 
@@ -134,7 +136,7 @@ resource "aws_security_group" "this" {
 }
 
 resource "aws_ec2_client_vpn_network_association" "this" {
-  for_each               = toset(var.associated_subnets)
+  for_each               = local.associated_subnets_map
   client_vpn_endpoint_id = aws_ec2_client_vpn_endpoint.this.id
   subnet_id              = each.value
 
